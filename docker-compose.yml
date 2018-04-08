@@ -1,0 +1,53 @@
+version: '3.4'
+services:
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:6.2.3
+    container_name: elasticsearch    
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    ports:
+      - 9200:9200
+      - 9300:9300
+    volumes:
+      - ./elasticsearch/config/elasticsearch.yml:/usr/share/elasticsearch/config/elasticsearch.yml       
+    networks:
+      - elk
+
+  logstash:
+    image: docker.elastic.co/logstash/logstash:6.2.3
+    container_name: logstash
+    ports: 
+      - 5000:5000
+    volumes:
+      - ./logstash/config/logstash.yml:/usr/share/logstash/config/logstash.yml
+      - ./logstash/pipeline:/usr/share/logstash/pipeline:ro
+    networks:
+      - elk
+    depends_on:
+      - elasticsearch
+
+  kibana:
+    image: docker.elastic.co/kibana/kibana:6.2.3
+    container_name: kibana
+    ports:
+      - 5601:5601 
+    volumes:
+      - ./kibana/config/:/usr/share/kibana/config     
+    networks:
+      - elk
+    depends_on:
+      - elasticsearch
+
+  filebeat:
+    image: docker.elastic.co/beats/filebeat:6.2.3
+    container_name: filebeat
+    volumes:
+      - ./filebeat/config/filebeat.yml:/usr/share/filebeat/filebeat.yml
+    networks:
+      - elk    
+
+networks:
+  elk:
+    driver: bridge
